@@ -8,6 +8,37 @@ This guide covers key concepts, configuration, and troubleshooting steps for Acc
 
 **ACLs are used to permit or deny traffic based on source/destination IP, protocol, or port. They are commonly used for security and traffic filtering.**
 
+### Types of ACLs
+
+- **Numbered ACLs:** Use numbers to identify the ACL (e.g., 1-99 for standard, 100-199 for extended).
+- **Named ACLs:** Use a custom name to identify the ACL, allowing easier editing and management.
+
+### Numbered ACL Example
+
+```
+access-list 100 permit tcp 192.168.1.0 0.0.0.255 any eq 80
+interface GigabitEthernet0/0
+ ip access-group 100 in
+```
+**Explanation:**
+- `access-list 100 permit tcp ...`: Permits HTTP traffic from 192.168.1.0/24 to any destination.
+- `ip access-group 100 in`: Applies ACL 100 inbound on the interface.
+
+### Named ACL Example
+
+```
+ip access-list extended WEB-ONLY
+ permit tcp 192.168.1.0 0.0.0.255 any eq 80
+ deny ip any any
+interface GigabitEthernet0/0
+ ip access-group WEB-ONLY in
+```
+**Explanation:**
+- `ip access-list extended WEB-ONLY`: Creates a named extended ACL.
+- `permit ...`: Permits specified traffic.
+- `deny ip any any`: Explicitly denies all other traffic (optional, as there is an implicit deny).
+- `ip access-group WEB-ONLY in`: Applies the named ACL inbound.
+
 ### Common Issues
 - ACL applied in the wrong direction or interface.
 - Implicit deny at the end of every ACL.
