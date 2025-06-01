@@ -16,16 +16,30 @@ This guide covers key concepts, configuration, and troubleshooting steps for Acc
 ### Numbered ACL Example
 
 ```
+access-list 100 permit <protocol> <source-ip> <wildcard-mask> any eq <port>
+interface GigabitEthernet0/0
+ ip access-group 100 in
+```
+**Example (permit HTTP from 192.168.1.0/24):**
+```
 access-list 100 permit tcp 192.168.1.0 0.0.0.255 any eq 80
 interface GigabitEthernet0/0
  ip access-group 100 in
 ```
 **Explanation:**
-- `access-list 100 permit tcp ...`: Permits HTTP traffic from 192.168.1.0/24 to any destination.
+- `access-list 100 permit <protocol> <ip> <wildcard-mask> any eq <port>`: Permits specified protocol and port from the given source IP/subnet to any destination.
 - `ip access-group 100 in`: Applies ACL 100 inbound on the interface.
 
 ### Named ACL Example
 
+```
+ip access-list extended <ACL-NAME>
+ permit <protocol> <source-ip> <wildcard-mask> any eq <port>
+ deny ip any any
+interface GigabitEthernet0/0
+ ip access-group <ACL-NAME> in
+```
+**Example (permit HTTP from 192.168.1.0/24):**
 ```
 ip access-list extended WEB-ONLY
  permit tcp 192.168.1.0 0.0.0.255 any eq 80
@@ -34,10 +48,10 @@ interface GigabitEthernet0/0
  ip access-group WEB-ONLY in
 ```
 **Explanation:**
-- `ip access-list extended WEB-ONLY`: Creates a named extended ACL.
-- `permit ...`: Permits specified traffic.
+- `ip access-list extended <ACL-NAME>`: Creates a named extended ACL.
+- `permit <protocol> <ip> <wildcard-mask> any eq <port>`: Permits specified protocol and port from the given source IP/subnet.
 - `deny ip any any`: Explicitly denies all other traffic (optional, as there is an implicit deny).
-- `ip access-group WEB-ONLY in`: Applies the named ACL inbound.
+- `ip access-group <ACL-NAME> in`: Applies the named ACL inbound.
 
 ### Common Issues
 - ACL applied in the wrong direction or interface.
@@ -112,6 +126,20 @@ interface GigabitEthernet0/0
 ### Dynamic NAT Example
 ```
 interface GigabitEthernet0/0
+ ip address <inside-ip> <subnet-mask>
+ ip nat inside
+
+interface GigabitEthernet0/1
+ ip address <outside-ip> <subnet-mask>
+ ip nat outside
+
+ip nat pool <POOLNAME> <start-public-ip> <end-public-ip> netmask <netmask>
+access-list 1 permit <inside-subnet> <wildcard-mask>
+ip nat inside source list 1 pool <POOLNAME>
+```
+**Example:**
+```
+interface GigabitEthernet0/0
  ip address 192.168.1.1 255.255.255.0
  ip nat inside
 
@@ -127,6 +155,18 @@ ip nat inside source list 1 pool MYPOOL
 ### Static NAT Example
 ```
 interface GigabitEthernet0/0
+ ip address <inside-ip> <subnet-mask>
+ ip nat inside
+
+interface GigabitEthernet0/1
+ ip address <outside-ip> <subnet-mask>
+ ip nat outside
+
+ip nat inside source static <inside-ip> <public-ip>
+```
+**Example:**
+```
+interface GigabitEthernet0/0
  ip address 192.168.1.10 255.255.255.0
  ip nat inside
 
@@ -137,7 +177,7 @@ interface GigabitEthernet0/1
 ip nat inside source static 192.168.1.10 203.0.113.10
 ```
 **Explanation:**
-- `ip nat inside source static 192.168.1.10 203.0.113.10`: Maps internal IP 192.168.1.10 to public IP 203.0.113.10 one-to-one.
+- `ip nat inside source static <inside-ip> <public-ip>`: Maps internal IP to public IP one-to-one.
 
 ---
 
@@ -169,7 +209,13 @@ ip nat inside source static 192.168.1.10 203.0.113.10
     show running-config interface [interface]
     ```
 
-### Example
+### PAT Example
+
+```
+access-list 1 permit <inside-subnet> <wildcard-mask>
+ip nat inside source list 1 interface <outside-interface> overload
+```
+**Example:**
 ```
 access-list 1 permit 192.168.1.0 0.0.0.255
 ip nat inside source list 1 interface GigabitEthernet0/1 overload
