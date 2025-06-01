@@ -47,11 +47,17 @@ interface GigabitEthernet0/0
 
 **NAT translates private IP addresses to public IP addresses for internet access.**
 
+### Types of NAT
+- **Dynamic NAT:** Maps private IPs to a pool of public IPs.
+- **PAT (NAT Overload):** Maps many private IPs to one public IP using different ports.
+- **Static NAT:** Maps a single private IP to a single public IP (one-to-one mapping).
+
 ### Common Issues
 - NAT not applied to correct interfaces (`ip nat inside`/`ip nat outside`).
 - Missing or incorrect NAT rules.
 - Overlapping or missing access lists.
 - NAT pool exhausted.
+- Static NAT entry missing or incorrect.
 
 ### Troubleshooting Steps
 1. **Check NAT configuration:**
@@ -72,7 +78,7 @@ interface GigabitEthernet0/0
     ```
     - Ensure correct `ip nat inside` and `ip nat outside` assignments.
 
-### Example
+### Dynamic NAT Example
 ```
 interface GigabitEthernet0/0
  ip address 192.168.1.1 255.255.255.0
@@ -86,6 +92,21 @@ ip nat pool MYPOOL 203.0.113.10 203.0.113.20 netmask 255.255.255.0
 access-list 1 permit 192.168.1.0 0.0.0.255
 ip nat inside source list 1 pool MYPOOL
 ```
+
+### Static NAT Example
+```
+interface GigabitEthernet0/0
+ ip address 192.168.1.10 255.255.255.0
+ ip nat inside
+
+interface GigabitEthernet0/1
+ ip address 203.0.113.2 255.255.255.0
+ ip nat outside
+
+ip nat inside source static 192.168.1.10 203.0.113.10
+```
+**Explanation:**
+- `ip nat inside source static 192.168.1.10 203.0.113.10`: Maps internal IP 192.168.1.10 to public IP 203.0.113.10 one-to-one.
 
 ---
 
