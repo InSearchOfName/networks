@@ -1,6 +1,6 @@
-# ACL, NAT, and PAT Troubleshooting Guide
+# ACL, NAT, PAT, and OSPF Troubleshooting Guide
 
-This guide covers key concepts, configuration, and troubleshooting steps for Access Control Lists (ACL), Network Address Translation (NAT), and Port Address Translation (PAT) on Cisco devices.
+This guide covers key concepts, configuration, and troubleshooting steps for Access Control Lists (ACL), Network Address Translation (NAT), Port Address Translation (PAT), and OSPF on Cisco devices.
 
 ---
 
@@ -219,6 +219,99 @@ ip nat inside source list 1 interface <outside-interface> overload
 ```
 access-list 1 permit 192.168.1.0 0.0.0.255
 ip nat inside source list 1 interface GigabitEthernet0/1 overload
+```
+
+---
+
+## OSPF (Open Shortest Path First)
+
+**OSPF is a link-state routing protocol used for dynamic routing within an Autonomous System.**
+
+### Key Concepts
+- OSPF uses areas to optimize and organize routing (Area 0 is the backbone).
+- Each router has a unique Router ID (RID).
+- OSPF uses cost (based on bandwidth) as its metric.
+- Neighbors must be in the same area and have matching parameters to form adjacencies.
+
+### Common Issues
+- Mismatched OSPF area numbers.
+- Incorrect or missing network statements.
+- Interface not enabled for OSPF.
+- Router IDs not unique.
+- Passive interfaces blocking OSPF hellos.
+- Authentication mismatches (if used).
+
+### Troubleshooting Steps
+1. **Check OSPF configuration:**
+    ```
+    show running-config | section ospf
+    ```
+2. **Check OSPF neighbor relationships:**
+    ```
+    show ip ospf neighbor
+    ```
+3. **Check OSPF interface status:**
+    ```
+    show ip ospf interface
+    ```
+4. **Check OSPF routes in the routing table:**
+    ```
+    show ip route ospf
+    ```
+5. **Check OSPF process and database:**
+    ```
+    show ip ospf
+    show ip ospf database
+    ```
+6. **Check passive interfaces:**
+    ```
+    show running-config | include passive-interface
+    ```
+
+### OSPF Example Configuration
+
+```
+router ospf 10
+ router-id 1.1.1.1
+ network 192.168.10.0 0.0.0.255 area 0
+ network 10.1.1.0 0.0.0.3 area 0
+ network 10.1.1.4 0.0.0.3 area 0
+ passive-interface g0/0/0
+```
+**Explanation:**
+- `router ospf 10`: Starts OSPF process 10.
+- `router-id 1.1.1.1`: Sets the router's OSPF ID.
+- `network ... area ...`: Advertises networks in OSPF area 0.
+- `passive-interface ...`: Prevents OSPF hellos on the specified interface (no neighbor formed).
+
+### OSPF Interface Example
+
+```
+interface g0/0/0
+ ip ospf 10 area 0
+```
+**Explanation:**
+- Enables OSPF process 10 on the interface in area 0 (interface-based OSPF configuration).
+
+### General OSPF Troubleshooting Checklist
+
+- Are all routers in the same area for a given subnet?
+- Are network statements or interface OSPF commands correct?
+- Are router IDs unique?
+- Are interfaces up and not passive (unless intended)?
+- Are OSPF neighbors established (`show ip ospf neighbor`)?
+- Are OSPF routes present in the routing table?
+
+### Useful OSPF Show Commands
+
+```
+show ip ospf
+show ip ospf neighbor
+show ip ospf interface
+show ip ospf database
+show ip route ospf
+show running-config | section ospf
+show running-config | include passive-interface
 ```
 
 ---
